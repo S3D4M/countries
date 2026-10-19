@@ -87,7 +87,7 @@ input{flex:1}
   <div class="row2"><button class="alt" id="done" type="button">✅ تابعت الحساب المثبّت (تم)</button></div>
   <div class="row2"><button class="alt" id="join" type="button">👋 مشاهد جديد يدخل</button><button class="alt" id="bots" type="button">جمهور وهمي: شغّال</button></div>
 </div>
-<div style="margin-top:28px;text-align:center"><button class="alt" id="rst" type="button">🔄 تصفير اللعبة</button></div>
+<div style="margin-top:28px;text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="alt" id="snd" type="button">🔇 تشغيل الصوت</button><button class="alt" id="mus" type="button">🎵 تشغيل الموسيقى</button><button class="alt" id="rst" type="button">🔄 تصفير اللعبة</button></div>
 </div>
 
 <script>
@@ -165,16 +165,16 @@ function renderPin(){
 }
 function add(id,amt){
  var before=order();st.s[id]+=amt;var after=order();
- if(after[0].id!==before[0].id)ev("👑 "+lab(after[0])+" صارت الأولى! تجاوزت "+lab(before[0]),true);
+ if(after[0].id!==before[0].id)sfx("lead"),ev("👑 "+lab(after[0])+" صارت الأولى! تجاوزت "+lab(before[0]),true);
  else{for(var i=1;i<4;i++){var j=before.indexOf(after[i]);if(j>i){ev("🚀 "+lab(after[i])+" تجاوزت "+lab(after[i+1]),true);break}}}
  render();
 }
 function boom(id){
  var now=Date.now(),w=st.win[id];w.push(now);
  while(w.length&&now-w[0]>8000)w.shift();
- if(w.length>=BOOM){w.length=0;add(id,25);ev("💥 انفجار "+lab(byId(id))+"! أهلها كتبوا مع بعض",true)}
+ if(w.length>=BOOM){w.length=0;sfx("boom");add(id,25);ev("💥 انفجار "+lab(byId(id))+"! أهلها كتبوا مع بعض",true)}
 }
-function join(who,id){st.users[who]={c:id,pts:0};st.cnt[id]++;ev("🎉 "+who+" انضم لـ "+lab(byId(id))+" · لاعب رقم "+st.cnt[id]);render()}
+function join(who,id){sfx("join");st.users[who]={c:id,pts:0};st.cnt[id]++;ev("🎉 "+who+" انضم لـ "+lab(byId(id))+" · لاعب رقم "+st.cnt[id]);render()}
 function follow(who){
  if(st.over)return;
  var u=st.users[who],p=st.pin;
@@ -202,7 +202,7 @@ function comment(who,text){
 function gift(who,k,id){
  if(st.over)return;
  var g=GIFT[k],u=st.users[who];if(!u){join(who,id);u=st.users[who]}
- var c=byId(u.c);fx(g.icon,k);
+ var c=byId(u.c);fx(g.icon,k);sfx(k===20?"lion":k===5?"plane":"rose");
  st.gifts[who]=(st.gifts[who]||0)+g.pts;
  feed(g.icon+" هدية لـ "+c.n,"g",who);
  if(k===20)ev("🦁 ضربة الأسد من "+who+" لـ "+lab(c)+"!",true);
@@ -241,7 +241,7 @@ var ti=0;function tip(){var t=$("tip");t.style.animation="none";void t.offsetWid
 tip();setInterval(tip,4500);
 function fx(icon,k){var e=$("fx");e.textContent=k===20?icon+icon+icon:icon;e.className="fx";void e.offsetWidth;e.className="fx go"}
 function endRound(){
- st.over=1;var w=order()[0];
+ st.over=1;sfx("end");var w=order()[0];
  var tg=Object.keys(st.gifts).sort(function(a,b){return st.gifts[b]-st.gifts[a]})[0];
  $("ovf").textContent=w.f;$("ovt").textContent="فازت "+w.n+" بالجولة "+st.rn+"!";
  $("ovs").textContent="الجولة الجاية بعد لحظات، ابقَ واكتب اسم دولتك";
@@ -250,7 +250,7 @@ function endRound(){
  st.nr=setTimeout(newRound,6000);
 }
 function newRound(){
- st.rn++;st.over=0;st.warn=0;st.rEnd=Date.now()+ROUND*1000;st.gifts={};st.rate={};
+ st.rn++;st.over=0;sfx("start");st.warn=0;st.rEnd=Date.now()+ROUND*1000;st.gifts={};st.rate={};
  C.forEach(function(c){st.s[c.id]=LIVE?0:10+Math.random()*20;st.win[c.id]=[]});
  $("ov").className="ov";ev("🔔 بدأت الجولة "+st.rn+"! اكتب اسم دولتك",true);render();
 }
@@ -258,9 +258,59 @@ setInterval(function(){
  if(st.over)return;
  var left=Math.max(0,Math.ceil((st.rEnd-Date.now())/1000));
  $("rt").textContent="جولة "+st.rn+" · "+Math.floor(left/60)+":"+("0"+left%60).slice(-2);
- if(left<=15&&!st.warn){st.warn=1;ev("⏳ آخر 15 ثانية! ادعموا دولتكم",true)}
+ if(left<=15&&!st.warn){st.warn=1;sfx("warn");ev("⏳ آخر 15 ثانية! ادعموا دولتكم",true)}
  if(left<=0)endRound();
 },500);
+var AX=null,SND=false,lastS=0;
+var SFX={join:[[660,0,.1,"sine",.08]],rose:[[880,0,.12],[1320,.1,.18]],plane:[[523,0,.12],[659,.1,.12],[784,.2,.12],[1047,.3,.3]],
+lion:[[392,0,.15,"sawtooth",.12],[523,.12,.15,"sawtooth",.12],[659,.24,.15,"sawtooth",.12],[784,.36,.15,"sawtooth",.12],[1047,.5,.5,"sawtooth",.14]],
+lead:[[784,0,.1],[988,.1,.1],[1175,.2,.25]],boom:[[110,0,.35,"square",.14],[220,.05,.3,"sawtooth",.1]],
+start:[[523,0,.12],[784,.12,.3]],end:[[784,0,.15],[784,.18,.15],[1047,.36,.5]],warn:[[440,0,.1,"square",.08],[440,.2,.1,"square",.08]]};
+function sfx(n){
+ if(!SND||!AX||!SFX[n])return;
+ var now=Date.now();if(now-lastS<100)return;lastS=now;
+ SFX[n].forEach(function(x){
+  var o=AX.createOscillator(),g=AX.createGain(),s0=AX.currentTime+x[1],d=x[2];
+  o.type=x[3]||"sine";o.frequency.value=x[0];
+  g.gain.setValueAtTime(0.0001,s0);g.gain.exponentialRampToValueAtTime(x[4]||0.15,s0+0.02);g.gain.exponentialRampToValueAtTime(0.0001,s0+d);
+  o.connect(g);g.connect(AX.destination);o.start(s0);o.stop(s0+d+0.05);
+ });
+}
+$("snd").onclick=function(){
+ if(!AX){var K=window.AudioContext||window.webkitAudioContext;if(!K)return;AX=new K()}
+ if(AX.state==="suspended")AX.resume();
+ SND=!SND;this.textContent=SND?"🔊 الصوت شغال":"🔇 تشغيل الصوت";
+ if(SND){lastS=0;sfx("rose")}
+};
+var MUS=false,mStep=0,mNext=0,mTimer=null,NB=null;
+var SC=[440,466.16,554.37,587.33,659.25,698.46,783.99,880],RT=[110,110,116.54,110,110,110,98,116.54],PAT=[0,2,4,2,3,4,5,4,2,4,6,4,7,6,5,4];
+function ax(){if(!AX){var K=window.AudioContext||window.webkitAudioContext;if(!K)return false;AX=new K()}if(AX.state==="suspended")AX.resume();return true}
+function mn(f,t,d,type,v){var o=AX.createOscillator(),g=AX.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(g);g.connect(AX.destination);o.start(t);o.stop(t+d+0.02)}
+function kick(t){var o=AX.createOscillator(),g=AX.createGain();o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(40,t+0.14);g.gain.setValueAtTime(0.22,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.16);o.connect(g);g.connect(AX.destination);o.start(t);o.stop(t+0.18)}
+function nb(){if(!NB){NB=AX.createBuffer(1,Math.floor(AX.sampleRate*0.05),AX.sampleRate);var d=NB.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1}return NB}
+function hat(t,v){var s=AX.createBufferSource(),f=AX.createBiquadFilter(),g=AX.createGain();s.buffer=nb();f.type="highpass";f.frequency.value=7000;g.gain.value=v||0.04;s.connect(f);f.connect(g);g.connect(AX.destination);s.start(t)}
+function snare(t,v){var s=AX.createBufferSource(),f=AX.createBiquadFilter(),g=AX.createGain();s.buffer=nb();f.type="bandpass";f.frequency.value=1800;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.09);s.connect(f);f.connect(g);g.connect(AX.destination);s.start(t)}
+function musTick(){
+ if(!MUS)return;
+ while(mNext<AX.currentTime+0.2){
+  var i=mStep%16,bar=Math.floor(mStep/16)%8,root=RT[bar],sp=60/138/4,t=mNext,hi=bar>=4,f=SC[PAT[i]];
+  if(i%4===0)kick(t);
+  if(i===4||i===12)snare(t,0.2);
+  if(bar===7&&i>=8)snare(t,0.06+(i-8)*0.02);
+  hat(t,i%4===2?0.06:(i%2===1?0.025:0.015));
+  if(i%2===0)mn(i%4===2?root*2:root,t,sp*1.6,"triangle",0.16);
+  mn(f,t,sp*0.85,"sawtooth",0.03);
+  if(hi&&i%2===0)mn(f*2,t,sp*0.7,"square",0.012);
+  mNext+=sp;mStep++;
+ }
+ mTimer=setTimeout(musTick,50);
+}
+$("mus").onclick=function(){
+ if(!ax())return;
+ MUS=!MUS;this.textContent=MUS?"🎵 الموسيقى شغالة":"🎵 تشغيل الموسيقى";
+ clearTimeout(mTimer);
+ if(MUS){mStep=0;mNext=AX.currentTime+0.1;musTick()}
+};
 function resetGame(live){
  clearTimeout(st.nr);
  C.forEach(function(c){st.s[c.id]=0;st.cnt[c.id]=0;st.win[c.id]=[]});
