@@ -87,6 +87,7 @@ input{flex:1}
   <div class="row2"><button class="alt" id="done" type="button">✅ تابعت الحساب المثبّت (تم)</button></div>
   <div class="row2"><button class="alt" id="join" type="button">👋 مشاهد جديد يدخل</button><button class="alt" id="bots" type="button">جمهور وهمي: شغّال</button></div>
 </div>
+<div style="margin-top:28px;text-align:center"><button class="alt" id="rst" type="button">🔄 تصفير اللعبة</button></div>
 </div>
 
 <script>
@@ -246,7 +247,7 @@ function endRound(){
  $("ovs").textContent="الجولة الجاية بعد لحظات، ابقَ واكتب اسم دولتك";
  $("ovg").textContent=tg?"🏅 أكثر داعم: "+tg:"";
  $("ov").className="ov on";
- setTimeout(newRound,6000);
+ st.nr=setTimeout(newRound,6000);
 }
 function newRound(){
  st.rn++;st.over=0;st.warn=0;st.rEnd=Date.now()+ROUND*1000;st.gifts={};st.rate={};
@@ -260,9 +261,20 @@ setInterval(function(){
  if(left<=15&&!st.warn){st.warn=1;ev("⏳ آخر 15 ثانية! ادعموا دولتكم",true)}
  if(left<=0)endRound();
 },500);
+function resetGame(live){
+ clearTimeout(st.nr);
+ C.forEach(function(c){st.s[c.id]=10+Math.random()*(live?20:50);st.cnt[c.id]=live?0:2+Math.floor(Math.random()*8);st.win[c.id]=[]});
+ st.users={};st.gifts={};st.pin=null;st.queue=[];st.rate={};st.rn=1;st.rEnd=Date.now()+ROUND*1000;st.over=0;st.warn=0;
+ $("ov").className="ov";$("feed").innerHTML="";$("gl").textContent="";
+ ev("🔄 بدأت لعبة جديدة! اكتب اسم دولتك",true);render();renderPin();
+}
+$("rst").onclick=function(){var b=this;
+ if(b.dataset.s){clearTimeout(b._t);delete b.dataset.s;b.textContent="🔄 تصفير اللعبة";resetGame(LIVE);return}
+ b.dataset.s=1;b.textContent="اضغط مرة ثانية للتأكيد";
+ b._t=setTimeout(function(){delete b.dataset.s;b.textContent="🔄 تصفير اللعبة"},3000)};
 var LIVE=/[?&]live/.test(location.search);
 if(LIVE){
- st.bots=false;var pn=document.querySelector(".panel");if(pn)pn.style.display="none";
+ st.bots=false;resetGame(true);var pn=document.querySelector(".panel");if(pn)pn.style.display="none";
  (function conn(){
   var ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws");
   ws.onmessage=function(m){var d;try{d=JSON.parse(m.data)}catch(e){return}
